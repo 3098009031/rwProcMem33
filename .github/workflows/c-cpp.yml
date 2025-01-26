@@ -22,18 +22,33 @@ jobs:
         sudo apt-get install -y linux-headers-$(uname -r)
         sudo apt-get install -y libelf-dev elfutils
         sudo apt-get install -y flex bison
-        sudo apt-get install -y linux-headers-generic
     
     - name: Download Android NDK
       run: |
         wget https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
         unzip android-ndk-r25c-linux.zip
         echo "ANDROID_NDK_HOME=$PWD/android-ndk-r25c" >> $GITHUB_ENV
+    
+    - name: Download Kernel Source
+      run: |
+        git clone --depth=1 https://github.com/torvalds/linux.git -b v4.14 kernel
+        
+    - name: Configure Kernel
+      run: |
+        cd kernel
+        make ARCH=x86_64 allnoconfig
+        echo "CONFIG_MODULES=y" >> .config
+        echo "CONFIG_SMP=y" >> .config
+        echo "CONFIG_X86_64=y" >> .config
+        echo "CONFIG_UNWINDER_FRAME_POINTER=y" >> .config
+        echo "CONFIG_FRAME_POINTER=y" >> .config
+        make ARCH=x86_64 olddefconfig
+        make ARCH=x86_64 prepare
         
     - name: Build Driver Module
       run: |
         cd rwProcMem33Module/rwProcMem_module
-        make ARCH=x86_64 CROSS_COMPILE=x86_64-linux-gnu- -C /usr/src/linux-headers-$(uname -r) M=$PWD
+        make ARCH=x86_64 CROSS_COMPILE=x86_64-linux-gnu- -C ../../kernel M=$PWD
         
     - name: Build Test Program
       run: |
