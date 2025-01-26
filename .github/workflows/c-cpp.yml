@@ -31,19 +31,19 @@ jobs:
     
     - name: Download Kernel Source
       run: |
-        git clone --depth=1 https://github.com/torvalds/linux.git -b v5.4 kernel
+        git clone --depth=1 https://github.com/torvalds/linux.git -b v4.19 kernel
         
     - name: Configure Kernel
       run: |
         cd kernel
-        make ARCH=x86_64 x86_64_defconfig
-        # 禁用一些可能导致问题的选项
-        echo "CONFIG_UNWINDER_ORC=n" >> .config
-        echo "CONFIG_STACK_VALIDATION=n" >> .config
-        echo "CONFIG_OBJTOOL=n" >> .config
+        make ARCH=x86_64 defconfig
+        # 禁用一些功能以简化编译
+        sed -i 's/CONFIG_UNWINDER_ORC=y/CONFIG_UNWINDER_ORC=n/' .config
+        sed -i 's/CONFIG_STACK_VALIDATION=y/CONFIG_STACK_VALIDATION=n/' .config
+        sed -i 's/CONFIG_DEBUG_INFO=y/CONFIG_DEBUG_INFO=n/' .config
+        echo "CONFIG_UNWINDER_FRAME_POINTER=y" >> .config
         make ARCH=x86_64 olddefconfig
-        make ARCH=x86_64 prepare
-        make ARCH=x86_64 modules_prepare
+        make ARCH=x86_64 prepare scripts
         
     - name: Build Driver Module
       run: |
