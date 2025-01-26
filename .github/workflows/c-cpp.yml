@@ -37,7 +37,11 @@ jobs:
       run: |
         cd kernel
         make ARCH=x86_64 x86_64_defconfig
-        make ARCH=x86_64 oldconfig
+        # 禁用一些可能导致问题的选项
+        echo "CONFIG_UNWINDER_ORC=n" >> .config
+        echo "CONFIG_STACK_VALIDATION=n" >> .config
+        echo "CONFIG_OBJTOOL=n" >> .config
+        make ARCH=x86_64 olddefconfig
         make ARCH=x86_64 prepare
         make ARCH=x86_64 modules_prepare
         
