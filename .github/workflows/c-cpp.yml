@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04  # 使用较老的Ubuntu版本，可能有更好的兼容性
     
     steps:
     - uses: actions/checkout@v4
@@ -19,7 +19,8 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential git cmake
         sudo apt-get install -y gcc-x86-64-linux-gnu
-        sudo apt-get install -y linux-headers-$(uname -r)
+        # 安装特定版本的内核头文件
+        sudo apt-get install -y linux-headers-5.10.0-1057-oem
         sudo apt-get install -y libelf-dev elfutils
         sudo apt-get install -y flex bison
     
@@ -28,35 +29,12 @@ jobs:
         wget https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
         unzip android-ndk-r25c-linux.zip
         echo "ANDROID_NDK_HOME=$PWD/android-ndk-r25c" >> $GITHUB_ENV
-    
-    - name: Download Kernel Source
-      run: |
-        git clone --depth=1 https://github.com/torvalds/linux.git -b v5.10 kernel
-        
-    - name: Configure Kernel
-      run: |
-        cd kernel
-        make ARCH=x86_64 allnoconfig
-        echo "CONFIG_MODULES=y" >> .config
-        echo "CONFIG_SMP=y" >> .config
-        echo "CONFIG_X86_64=y" >> .config
-        echo "CONFIG_64BIT=y" >> .config
-        echo "CONFIG_KALLSYMS=y" >> .config
-        # 禁用所有可能导致 objtool 构建的选项
-        echo "CONFIG_UNWINDER_FRAME_POINTER=n" >> .config
-        echo "CONFIG_STACK_VALIDATION=n" >> .config
-        echo "CONFIG_OBJTOOL=n" >> .config
-        echo "CONFIG_FRAME_POINTER=n" >> .config
-        echo "CONFIG_RETPOLINE=n" >> .config
-        echo "CONFIG_FTRACE=n" >> .config
-        make ARCH=x86_64 olddefconfig
-        make ARCH=x86_64 prepare
         
     - name: Build Driver Module
       run: |
         cd rwProcMem33Module/rwProcMem_module
-        # 添加 -fno-stack-protector 来避免一些编译问题
-        make ARCH=x86_64 CROSS_COMPILE=x86_64-linux-gnu- -C ../../kernel M=$PWD \
+        # 直接使用系统的内核头文件编译
+        make ARCH=x86_64 CROSS_COMPILE=x86_64-linux-gnu- -C /usr/src/linux-headers-5.10.0-1057-oem M=$PWD \
           EXTRA_CFLAGS="-Wno-error=all -Wno-error=use-after-free -w -fno-stack-protector"
         
     - name: Build Test Program
