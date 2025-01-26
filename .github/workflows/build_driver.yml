@@ -1,0 +1,50 @@
+name: Build Driver Module
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential git cmake
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+        sudo apt-get install -y linux-headers-$(uname -r)
+    
+    - name: Download Android NDK
+      run: |
+        wget https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+        unzip android-ndk-r25c-linux.zip
+        echo "ANDROID_NDK_HOME=$PWD/android-ndk-r25c" >> $GITHUB_ENV
+    
+    - name: Download Kernel Source
+      run: |
+        git clone --depth=1 https://github.com/LineageOS/android_kernel_xiaomi_sm8250.git kernel
+        
+    - name: Build Driver Module
+      run: |
+        cd rwProcMem33Module/rwProcMem_module
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../../kernel M=$PWD
+        
+    - name: Build Test Program
+      run: |
+        cd rwProcMem33Module/testCEServer
+        $ANDROID_NDK_HOME/ndk-build
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: driver-files
+        path: |
+          rwProcMem33Module/rwProcMem_module/*.ko
+          rwProcMem33Module/testCEServer/libs/arm64-v8a/*
