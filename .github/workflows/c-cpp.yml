@@ -40,18 +40,24 @@ jobs:
         echo "CONFIG_MODULES=y" >> .config
         echo "CONFIG_SMP=y" >> .config
         echo "CONFIG_X86_64=y" >> .config
-        echo "CONFIG_UNWINDER_FRAME_POINTER=y" >> .config
         echo "CONFIG_64BIT=y" >> .config
-        echo "CONFIG_FRAME_POINTER=y" >> .config
         echo "CONFIG_KALLSYMS=y" >> .config
+        # 禁用所有可能导致 objtool 构建的选项
+        echo "CONFIG_UNWINDER_FRAME_POINTER=n" >> .config
+        echo "CONFIG_STACK_VALIDATION=n" >> .config
+        echo "CONFIG_OBJTOOL=n" >> .config
+        echo "CONFIG_FRAME_POINTER=n" >> .config
+        echo "CONFIG_RETPOLINE=n" >> .config
+        echo "CONFIG_FTRACE=n" >> .config
         make ARCH=x86_64 olddefconfig
         make ARCH=x86_64 prepare
         
     - name: Build Driver Module
       run: |
         cd rwProcMem33Module/rwProcMem_module
+        # 添加 -fno-stack-protector 来避免一些编译问题
         make ARCH=x86_64 CROSS_COMPILE=x86_64-linux-gnu- -C ../../kernel M=$PWD \
-          EXTRA_CFLAGS="-Wno-error=all -Wno-error=use-after-free -w"
+          EXTRA_CFLAGS="-Wno-error=all -Wno-error=use-after-free -w -fno-stack-protector"
         
     - name: Build Test Program
       run: |
