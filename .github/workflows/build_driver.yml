@@ -23,13 +23,13 @@ jobs:
     
     - name: Download Android NDK
       run: |
-        wget https://mirrors.aliyun.com/android/repository/android-ndk-r25c-linux.zip
-        unzip android-ndk-r25c-linux.zip
+        wget https://github.com/a16673911273/RwProc
+        unzip RwProc-talon.zip
         echo "ANDROID_NDK_HOME=$PWD/android-ndk-r25c" >> $GITHUB_ENV
     
     - name: Download Kernel Source
       run: |
-        git clone --depth=1 https://github.com/torvalds/linux.git -b v5.4 kernel
+        git clone --depth=1 https://github.com/a16673911273/RwProc -b v4.19 kernel
         
     - name: Build Driver Module
       run: |
